@@ -1,0 +1,239 @@
+# Static Pages Tests for Autonomous Testing
+# 4 comprehensive test scenarios for static pages (About, Contact, Terms, Privacy)
+# Part of Phase 3: Test Coverage Expansion
+
+version: "1.0"
+app_type: ecommerce
+static_pages_tests: true
+total_scenarios: 4
+
+# Static Pages Tests (4 scenarios)
+static_pages_flow_tests:
+  - name: "About Page Loads and Displays Content"
+    id: STATIC001
+    priority: medium
+    tags: [static-pages, about, content]
+    description: "Test that About page loads correctly and displays company information"
+    steps:
+      - action: navigate
+        url: "{{base_url}}/about"
+      - action: wait_for
+        text: "About"
+        timeout: 3000
+      - action: screenshot
+        name: "about-page"
+      - action: check_console
+        level: error
+      - action: evaluate
+        function: |
+          () => {
+            return {
+              pageLoaded: !!document.querySelector('main'),
+              hasHeading: !!document.querySelector('h1'),
+              hasContent: document.body.innerText.length > 100,
+              headingText: document.querySelector('h1')?.textContent || '',
+              contentLength: document.body.innerText.length
+            };
+          }
+    assertions:
+      - type: page_loaded
+        expected: true
+      - type: url_contains
+        url: "/about"
+        expected: true
+      - type: element_exists
+        selector: "h1"
+        expected: true
+      - type: console_errors
+        expected: 0
+
+  - name: "Contact Page Form Submission"
+    id: STATIC002
+    priority: medium
+    tags: [static-pages, contact, form-submission]
+    description: "Test that Contact page form can be filled and submitted successfully"
+    steps:
+      - action: navigate
+        url: "{{base_url}}/contact"
+      - action: wait_for
+        text: "Contact"
+        timeout: 3000
+      - action: screenshot
+        name: "contact-page"
+      - action: evaluate
+        function: |
+          () => {
+            return {
+              hasNameField: !!document.querySelector('input[name="name"]'),
+              hasEmailField: !!document.querySelector('input[name="email"]'),
+              hasMessageField: !!document.querySelector('textarea[name="message"]'),
+              hasSubmitButton: !!document.querySelector('button[type="submit"]')
+            };
+          }
+      - action: fill_form
+        fields:
+          name: "Test User"
+          email: "testuser@example.com"
+          subject: "Test Subject"
+          message: "This is a test message for contact form"
+      - action: click
+        element: "Submit button"
+        ref: "button[type='submit']"
+      - action: wait_for
+        text: "Thank you"
+        timeout: 5000
+      - action: screenshot
+        name: "contact-form-success"
+    assertions:
+      - type: page_loaded
+        expected: true
+      - type: url_contains
+        url: "/contact"
+        expected: true
+      - type: element_exists
+        selector: "input[name='name']"
+        expected: true
+      - type: text_contains
+        text: "Thank you"
+        expected: true
+
+  - name: "Terms of Service Page Content"
+    id: STATIC003
+    priority: low
+    tags: [static-pages, terms, legal]
+    description: "Test that Terms of Service page loads and displays legal content"
+    steps:
+      - action: navigate
+        url: "{{base_url}}/terms"
+      - action: wait_for
+        text: "Terms"
+        timeout: 3000
+      - action: screenshot
+        name: "terms-page"
+      - action: check_console
+        level: error
+      - action: evaluate
+        function: |
+          () => {
+            const headings = document.querySelectorAll('h2, h3');
+            return {
+              pageLoaded: !!document.querySelector('main'),
+              hasHeadings: headings.length > 0,
+              headingCount: headings.length,
+              contentLength: document.body.innerText.length,
+              hasListItems: document.querySelectorAll('li').length > 0
+            };
+          }
+      - action: evaluate
+        function: |
+          () => {
+            // Check for typical terms page sections
+            const contentText = document.body.innerText.toLowerCase();
+            return {
+              hasAcceptanceSection: contentText.includes('acceptance'),
+              hasLiabilitySection: contentText.includes('liability'),
+              hasDisclaimerSection: contentText.includes('disclaimer')
+            };
+          }
+    assertions:
+      - type: page_loaded
+        expected: true
+      - type: url_contains
+        url: "/terms"
+        expected: true
+      - type: console_errors
+        expected: 0
+      - type: element_exists
+        selector: "h2, h3"
+        expected: true
+
+  - name: "Privacy Policy Page Content"
+    id: STATIC004
+    priority: low
+    tags: [static-pages, privacy, legal]
+    description: "Test that Privacy Policy page loads and displays privacy information"
+    steps:
+      - action: navigate
+        url: "{{base_url}}/privacy"
+      - action: wait_for
+        text: "Privacy"
+        timeout: 3000
+      - action: screenshot
+        name: "privacy-page"
+      - action: check_console
+        level: error
+      - action: evaluate
+        function: |
+          () => {
+            const headings = document.querySelectorAll('h2, h3');
+            return {
+              pageLoaded: !!document.querySelector('main'),
+              hasHeadings: headings.length > 0,
+              headingCount: headings.length,
+              contentLength: document.body.innerText.length,
+              hasListItems: document.querySelectorAll('li').length > 0,
+              headingsText: Array.from(headings).map(h => h.textContent).slice(0, 5)
+            };
+          }
+      - action: evaluate
+        function: |
+          () => {
+            // Check for typical privacy policy sections
+            const contentText = document.body.innerText.toLowerCase();
+            return {
+              hasCollectionSection: contentText.includes('collection'),
+              hasUsageSection: contentText.includes('use') || contentText.includes('usage'),
+              hasShareSection: contentText.includes('share') || contentText.includes('sharing'),
+              hasSecuritySection: contentText.includes('security'),
+              hasContactSection: contentText.includes('contact')
+            };
+          }
+      - action: evaluate
+        function: |
+          () => {
+            // Check for footer links
+            const footerLinks = document.querySelectorAll('footer a');
+            return {
+              footerLinksCount: footerLinks.length,
+              hasPrivacyLink: Array.from(footerLinks).some(l => l.textContent.toLowerCase().includes('privacy')),
+              hasTermsLink: Array.from(footerLinks).some(l => l.textContent.toLowerCase().includes('terms')),
+              hasContactLink: Array.from(footerLinks).some(l => l.textContent.toLowerCase().includes('contact'))
+            };
+          }
+    assertions:
+      - type: page_loaded
+        expected: true
+      - type: url_contains
+        url: "/privacy"
+        expected: true
+      - type: console_errors
+        expected: 0
+      - type: element_exists
+        selector: "h2, h3"
+        expected: true
+      - type: element_exists
+        selector: "footer a"
+        expected: true
+
+# Test configuration
+config:
+  browser_type: "chromium"
+  timeout: 30000
+  headless: true
+  screenshot_on_error: true
+  auto_fix_issues: true
+  test_data:
+    - contact_form:
+        name: "Test User"
+        email: "testuser@example.com"
+        subject: "Test Inquiry"
+        message: "This is a test message"
+    - pages:
+        - path: "/about"
+          title: "About"
+        - path: "/contact"
+          title: "Contact"
+        - path: "/terms"
+          title: "Terms of Service"
+        - path: "/privacy"
+          title: "Privacy Policy"

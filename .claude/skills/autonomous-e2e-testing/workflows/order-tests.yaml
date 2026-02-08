@@ -1,0 +1,297 @@
+# Order History & Management Tests for Autonomous Testing
+# 5 comprehensive test scenarios for order flows (listing, details, status, empty state, tracking)
+# Part of Phase 3: Test Coverage Expansion
+
+version: "1.0"
+app_type: ecommerce
+order_tests: true
+total_scenarios: 5
+
+# Order Management Tests (5 scenarios)
+order_flow_tests:
+  - name: "Order History Page Loads Successfully"
+    id: ORDER001
+    priority: high
+    tags: [orders, order-listing, page-load]
+    description: "Test that order history page loads without errors and displays user's orders"
+    steps:
+      - action: navigate
+        url: "{{base_url}}/auth/login"
+      - action: fill_form
+        fields:
+          email: "demo@example.com"
+          password: "demo123"
+      - action: click
+        element: "Sign In button"
+        ref: "button[type='submit']"
+      - action: wait_for
+        text: "Dashboard"
+        timeout: 5000
+      - action: navigate
+        url: "{{base_url}}/orders"
+      - action: wait_for
+        text: "Orders"
+        timeout: 3000
+      - action: screenshot
+        name: "orders-page"
+      - action: check_console
+        level: error
+      - action: evaluate
+        function: |
+          () => {
+            return {
+              pageLoaded: !!document.querySelector('[class*="orders"]'),
+              hasOrderList: !!document.querySelector('[class*="order-list"]') || !!document.querySelector('[class*="orders-container"]'),
+              hasOrderItems: document.querySelectorAll('[class*="order-item"]').length > 0
+            };
+          }
+    assertions:
+      - type: page_loaded
+        expected: true
+      - type: url_contains
+        url: "/orders"
+        expected: true
+      - type: console_errors
+        expected: 0
+
+  - name: "Order List Displays Order Details"
+    id: ORDER002
+    priority: high
+    tags: [orders, order-details, listing]
+    description: "Test that order list displays correct information for each order"
+    steps:
+      - action: navigate
+        url: "{{base_url}}/auth/login"
+      - action: fill_form
+        fields:
+          email: "demo@example.com"
+          password: "demo123"
+      - action: click
+        element: "Sign In button"
+        ref: "button[type='submit']"
+      - action: wait_for
+        text: "Dashboard"
+        timeout: 5000
+      - action: navigate
+        url: "{{base_url}}/orders"
+      - action: wait_for
+        text: "Orders"
+        timeout: 3000
+      - action: evaluate
+        function: |
+          () => {
+            const orderItems = document.querySelectorAll('[class*="order-item"]');
+            const firstOrder = orderItems[0];
+            if (!firstOrder) return { orderCount: 0 };
+
+            return {
+              orderCount: orderItems.length,
+              hasOrderId: !!firstOrder.querySelector('[class*="order-id"]'),
+              hasOrderDate: !!firstOrder.querySelector('[class*="order-date"]'),
+              hasOrderTotal: !!firstOrder.querySelector('[class*="order-total"]'),
+              hasOrderStatus: !!firstOrder.querySelector('[class*="order-status"]'),
+              orderIdText: firstOrder.querySelector('[class*="order-id"]')?.textContent || '',
+              orderTotal: firstOrder.querySelector('[class*="order-total"]')?.textContent || '',
+              orderStatus: firstOrder.querySelector('[class*="order-status"]')?.textContent || ''
+            };
+          }
+      - action: screenshot
+        name: "order-list-details"
+    assertions:
+      - type: element_exists
+        selector: "[class*='order-item']"
+        expected: true
+      - type: element_exists
+        selector: "[class*='order-id']"
+        expected: true
+      - type: element_exists
+        selector: "[class*='order-status']"
+        expected: true
+
+  - name: "Order Item Expansion Shows Details"
+    id: ORDER003
+    priority: high
+    tags: [orders, order-expansion, details]
+    description: "Test that clicking 'View Details' expands order to show items"
+    steps:
+      - action: navigate
+        url: "{{base_url}}/auth/login"
+      - action: fill_form
+        fields:
+          email: "demo@example.com"
+          password: "demo123"
+      - action: click
+        element: "Sign In button"
+        ref: "button[type='submit']"
+      - action: wait_for
+        text: "Dashboard"
+        timeout: 5000
+      - action: navigate
+        url: "{{base_url}}/orders"
+      - action: wait_for
+        text: "Orders"
+        timeout: 3000
+      - action: evaluate
+        function: |
+          () => {
+            const firstOrder = document.querySelector('[class*="order-item"]');
+            const detailsBtn = firstOrder?.querySelector('button[class*="details"]') ||
+                              firstOrder?.querySelector('button[class*="expand"]');
+            return {
+              hasDetailsButton: !!detailsBtn,
+              detailsButtonText: detailsBtn?.textContent || ''
+            };
+          }
+      - action: click
+        element: "View Details button"
+        ref: "[class*='order-item'] button[class*='details']"
+      - action: wait_for
+        text: "items"
+        timeout: 2000
+      - action: screenshot
+        name: "order-expanded"
+      - action: evaluate
+        function: |
+          () => {
+            const expandedOrder = document.querySelector('[class*="order-item"][class*="expanded"]') ||
+                                 document.querySelector('[class*="order-details"]');
+            return {
+              isExpanded: !!expandedOrder,
+              hasProductName: !!expandedOrder?.querySelector('[class*="product-name"]'),
+              hasQuantity: !!expandedOrder?.querySelector('[class*="quantity"]'),
+              hasPrice: !!expandedOrder?.querySelector('[class*="price"]')
+            };
+          }
+    assertions:
+      - type: element_exists
+        selector: "[class*='order-item']"
+        expected: true
+      - type: element_exists
+        selector: "[class*='product-name']"
+        expected: true
+
+  - name: "Order Status Badges Display Correctly"
+    id: ORDER004
+    priority: medium
+    tags: [orders, order-status, status-badge]
+    description: "Test that order status badges are displayed with correct colors and text"
+    steps:
+      - action: navigate
+        url: "{{base_url}}/auth/login"
+      - action: fill_form
+        fields:
+          email: "demo@example.com"
+          password: "demo123"
+      - action: click
+        element: "Sign In button"
+        ref: "button[type='submit']"
+      - action: wait_for
+        text: "Dashboard"
+        timeout: 5000
+      - action: navigate
+        url: "{{base_url}}/orders"
+      - action: wait_for
+        text: "Orders"
+        timeout: 3000
+      - action: evaluate
+        function: |
+          () => {
+            const statusBadges = document.querySelectorAll('[class*="order-status"]');
+            const statuses = Array.from(statusBadges).map(badge => ({
+              text: badge.textContent.trim(),
+              class: badge.className,
+              hasColorClass: /status-(pending|shipped|delivered)/i.test(badge.className)
+            }));
+
+            return {
+              statusCount: statuses.length,
+              statuses: statuses,
+              validStatuses: statuses.every(s =>
+                /pending|shipped|delivered|processing|cancelled/i.test(s.text)
+              )
+            };
+          }
+      - action: screenshot
+        name: "order-status-badges"
+    assertions:
+      - type: element_exists
+        selector: "[class*='order-status']"
+        expected: true
+      - type: console_errors
+        expected: 0
+
+  - name: "Empty Order History Shows Appropriate Message"
+    id: ORDER005
+    priority: medium
+    tags: [orders, empty-state, new-user]
+    description: "Test that new users with no orders see appropriate empty state message"
+    steps:
+      - action: navigate
+        url: "{{base_url}}/auth/register"
+      - action: wait_for
+        text: "Sign Up"
+        timeout: 3000
+      - action: fill_form
+        fields:
+          name: "New User {{timestamp}}"
+          email: "newuser{{timestamp}}@example.com"
+          password: "SecurePass123!@#"
+          confirmPassword: "SecurePass123!@#"
+      - action: click
+        element: "Sign Up button"
+        ref: "button[type='submit']"
+      - action: wait_for
+        text: "Registration successful"
+        timeout: 5000
+      - action: navigate
+        url: "{{base_url}}/orders"
+      - action: wait_for
+        text: "No orders"
+        timeout: 3000
+      - action: screenshot
+        name: "empty-orders"
+      - action: evaluate
+        function: |
+          () => {
+            const emptyMessage = document.querySelector('[class*="empty"]') ||
+                                document.querySelector('[class*="no-orders"]');
+            const shopButton = document.querySelector('a[href="/products"]') ||
+                              document.querySelector('button[class*="shop"]');
+
+            return {
+              hasEmptyMessage: !!emptyMessage,
+              emptyText: emptyMessage?.textContent || '',
+              hasShopButton: !!shopButton,
+              shopButtonText: shopButton?.textContent || ''
+            };
+          }
+    assertions:
+      - type: text_contains
+        text: "No orders"
+        expected: true
+      - type: element_exists
+        selector: "a[href='/products']"
+        expected: true
+
+# Test configuration
+config:
+  browser_type: "chromium"
+  timeout: 30000
+  headless: true
+  screenshot_on_error: true
+  auto_fix_issues: true
+  test_data:
+    - order_statuses: ["Pending", "Shipped", "Delivered", "Processing", "Cancelled"]
+    - sample_orders:
+        - id: "ORD-001"
+          date: "2025-01-20"
+          total: "Rs 5,000"
+          status: "Delivered"
+        - id: "ORD-002"
+          date: "2025-01-22"
+          total: "Rs 8,500"
+          status: "Shipped"
+        - id: "ORD-003"
+          date: "2025-01-25"
+          total: "Rs 3,200"
+          status: "Pending"

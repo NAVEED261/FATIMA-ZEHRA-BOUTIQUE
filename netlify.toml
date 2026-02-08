@@ -1,0 +1,27 @@
+[build]
+  base    = "."
+  publish = "learnflow-app/app/frontend/out"
+  command = "cd learnflow-app/app/frontend && npm ci && npm run build"
+
+[build.environment]
+  NODE_VERSION                    = "18"
+  NEXT_PUBLIC_USER_SERVICE_URL    = ""
+  NEXT_PUBLIC_PRODUCT_SERVICE_URL = ""
+  NEXT_PUBLIC_ORDER_SERVICE_URL   = ""
+  NEXT_PUBLIC_CHAT_SERVICE_URL    = ""
+
+[functions]
+  directory = "learnflow-app/netlify/functions"
+
+[[redirects]]
+  from   = "/api/*"
+  to     = "/.netlify/functions/api"
+  status = 200
+  force  = true
+
+[[headers]]
+  for = "/.netlify/functions/*"
+    [headers.values]
+      Access-Control-Allow-Origin  = "*"
+      Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
+      Access-Control-Allow-Headers = "Content-Type, Authorization"

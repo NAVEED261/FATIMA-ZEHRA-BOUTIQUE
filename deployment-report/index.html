@@ -1,0 +1,103 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fatima Zehra Boutique - Vercel Deployment Report</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 40px; }
+        .header { color: #333; border-bottom: 2px solid #007bff; padding-bottom: 20px; }
+        .status { padding: 20px; margin: 20px 0; border-radius: 8px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .warning { background: #fff3cd; border: 1px solid #ffeaa7; color: #856404; }
+        .section { margin: 30px 0; }
+        .section h2 { color: #007bff; border-left: 4px solid #007bff; padding-left: 10px; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #f8f9fa; font-weight: bold; }
+        .check { color: green; font-weight: bold; }
+        .cross { color: red; font-weight: bold; }
+        code { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; font-family: monospace; }
+        .endpoint { background: #f8f9fa; padding: 15px; margin: 10px 0; border-left: 4px solid #007bff; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🛍️ Fatima Zehra Boutique - Vercel Deployment Report</h1>
+        <p><strong>Generated:</strong> 2026-02-05 19:42:04</p>
+        <p><strong>Project:</strong> fatima-zehra-boutique</p>
+    </div>
+
+    <div class="section">
+        <h2>📋 Deployment Status</h2>
+        <div id="deployment-status">
+            <p>Deployment status will be updated here...</p>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>🔧 Environment Variables</h2>
+        <table>
+            <tr><th>Variable</th><th>Status</th></tr>
+            <tr><td><code>DATABASE_URL</code></td><td id="db-status">⏳ Pending</td></tr>
+            <tr><td><code>OPENAI_API_KEY</code></td><td id="openai-status">⏳ Pending</td></tr>
+            <tr><td><code>JWT_SECRET</code></td><td id="jwt-status">⏳ Pending</td></tr>
+            <tr><td><code>ENVIRONMENT</code></td><td id="env-status">⏳ Pending</td></tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>✅ API Endpoints Testing</h2>
+        <table>
+            <tr><th>Endpoint</th><th>Expected</th><th>Status</th></tr>
+            <tr><td><code>/api/health</code></td><td>200 - {"status":"ok"}</td><td id="health-status">⏳ Testing</td></tr>
+            <tr><td><code>/api/categories</code></td><td>200 - JSON array</td><td id="categories-status">⏳ Testing</td></tr>
+            <tr><td><code>/api/products?limit=5</code></td><td>200 - 5 products</td><td id="products-status">⏳ Testing</td></tr>
+            <tr><td><code>/api/products (total)</code></td><td>40 products</td><td id="product-count-status">⏳ Testing</td></tr>
+            <tr><td><code>/ (Frontend)</code></td><td>200 - HTML page</td><td id="frontend-status">⏳ Testing</td></tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>🌐 Frontend Testing</h2>
+        <table>
+            <tr><th>Feature</th><th>Status</th><th>Notes</th></tr>
+            <tr><td>Homepage loads</td><td id="homepage-check">⏳</td><td id="homepage-notes">-</td></tr>
+            <tr><td>Products display</td><td id="products-check">⏳</td><td id="products-notes">-</td></tr>
+            <tr><td>ChatWidget visible</td><td id="chat-check">⏳</td><td id="chat-notes">-</td></tr>
+            <tr><td>Register page loads</td><td id="register-check">⏳</td><td id="register-notes">-</td></tr>
+            <tr><td>Login page loads</td><td id="login-check">⏳</td><td id="login-notes">-</td></tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>📊 Summary</h2>
+        <div id="summary">
+            <p>Test summary will appear here...</p>
+        </div>
+    </div>
+
+    <script>
+        // Auto-update will be triggered by deployment script
+        function updateStatus(elementId, status, message = '') {
+            const elem = document.getElementById(elementId);
+            if (elem) {
+                if (status === 'success') {
+                    elem.innerHTML = '✅ ' + message;
+                    elem.className = 'check';
+                } else if (status === 'error') {
+                    elem.innerHTML = '❌ ' + message;
+                    elem.className = 'cross';
+                } else if (status === 'pending') {
+                    elem.innerHTML = '⏳ ' + message;
+                }
+            }
+        }
+
+        // Keep trying to load status updates every 5 seconds
+        setInterval(function() {
+            // Status will be updated by the backend
+        }, 5000);
+    </script>
+</body>
+</html>

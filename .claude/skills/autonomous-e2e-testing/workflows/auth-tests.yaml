@@ -1,0 +1,329 @@
+# Authentication Flow Tests for Autonomous Testing
+# 7 comprehensive test scenarios for auth flows (registration, login, logout, JWT, protected routes)
+# Part of Phase 3: Test Coverage Expansion
+
+version: "1.0"
+app_type: ecommerce
+auth_tests: true
+total_scenarios: 7
+
+# Authentication Tests (7 scenarios)
+auth_flow_tests:
+  - name: "User Registration With Valid Data"
+    id: AUTH001
+    priority: critical
+    tags: [auth, registration, user-creation]
+    description: "Test complete user registration flow with valid email and password"
+    steps:
+      - action: navigate
+        url: "{{base_url}}/auth/register"
+      - action: wait_for
+        text: "Sign Up"
+        timeout: 3000
+      - action: screenshot
+        name: "registration-page"
+      - action: evaluate
+        function: |
+          () => {
+            return {
+              hasEmailField: !!document.querySelector('input[type="email"]'),
+              hasPasswordField: !!document.querySelector('input[type="password"]'),
+              hasNameField: !!document.querySelector('input[name="name"]'),
+              hasSubmitButton: !!document.querySelector('button[type="submit"]')
+            };
+          }
+      - action: fill_form
+        fields:
+          name: "Test User"
+          email: "testuser{{timestamp}}@example.com"
+          password: "SecurePass123!@#"
+          confirmPassword: "SecurePass123!@#"
+      - action: click
+        element: "Sign Up button"
+        ref: "button[type='submit']"
+      - action: wait_for
+        text: "Registration successful"
+        timeout: 5000
+      - action: screenshot
+        name: "registration-success"
+      - action: check_console
+        level: error
+    assertions:
+      - type: page_loaded
+        expected: true
+      - type: console_errors
+        expected: 0
+      - type: element_exists
+        selector: "input[type='email']"
+        expected: true
+      - type: text_contains
+        text: "Registration successful"
+        expected: true
+
+  - name: "User Login With Valid Credentials"
+    id: AUTH002
+    priority: critical
+    tags: [auth, login, jwt-token]
+    description: "Test login flow and JWT token storage"
+    steps:
+      - action: navigate
+        url: "{{base_url}}/auth/login"
+      - action: wait_for
+        text: "Sign In"
+        timeout: 3000
+      - action: screenshot
+        name: "login-page"
+      - action: fill_form
+        fields:
+          email: "demo@example.com"
+          password: "demo123"
+      - action: click
+        element: "Sign In button"
+        ref: "button[type='submit']"
+      - action: wait_for
+        text: "Dashboard"
+        timeout: 5000
+      - action: evaluate
+        function: |
+          () => {
+            const token = localStorage.getItem('auth_token');
+            return {
+              tokenExists: !!token,
+              tokenLength: token ? token.length : 0,
+              isJWT: token ? token.split('.').length === 3 : false
+            };
+          }
+      - action: screenshot
+        name: "login-success"
+    assertions:
+      - type: page_loaded
+        expected: true
+      - type: localStorage_key
+        key: "auth_token"
+        expected_set: true
+      - type: text_contains
+        text: "Dashboard"
+        expected: true
+      - type: console_errors
+        expected: 0
+
+  - name: "Protected Route Access Without Login"
+    id: AUTH003
+    priority: high
+    tags: [auth, protected-routes, unauthorized]
+    description: "Test that unauthorized users are redirected to login"
+    steps:
+      - action: navigate
+        url: "{{base_url}}/orders"
+      - action: wait_for
+        text: "Sign In"
+        timeout: 5000
+      - action: screenshot
+        name: "unauthorized-redirect"
+      - action: evaluate
+        function: |
+          () => {
+            return {
+              currentPath: window.location.pathname,
+              hasLoginForm: !!document.querySelector('input[type="email"]'),
+              redirected: window.location.pathname.includes('/auth')
+            };
+          }
+    assertions:
+      - type: page_loaded
+        expected: true
+      - type: url_contains
+        url: "/auth"
+        expected: true
+      - type: text_contains
+        text: "Sign In"
+        expected: true
+
+  - name: "JWT Token Persistence After Page Refresh"
+    id: AUTH004
+    priority: high
+    tags: [auth, jwt-token, session-persistence]
+    description: "Test that JWT token persists after page refresh and user stays logged in"
+    steps:
+      - action: navigate
+        url: "{{base_url}}/auth/login"
+      - action: fill_form
+        fields:
+          email: "demo@example.com"
+          password: "demo123"
+      - action: click
+        element: "Sign In button"
+        ref: "button[type='submit']"
+      - action: wait_for
+        text: "Dashboard"
+        timeout: 5000
+      - action: evaluate
+        function: |
+          () => {
+            const token1 = localStorage.getItem('auth_token');
+            return { token1: token1, length: token1 ? token1.length : 0 };
+          }
+      - action: navigate
+        url: "{{base_url}}"
+      - action: wait_for
+        text: "Boutique"
+        timeout: 3000
+      - action: evaluate
+        function: |
+          () => {
+            const token2 = localStorage.getItem('auth_token');
+            return {
+              token2: token2,
+              tokenPersists: token2 ? token2.length > 0 : false,
+              isStillLoggedIn: !!document.querySelector('[class*="user-menu"]')
+            };
+          }
+    assertions:
+      - type: localStorage_key
+        key: "auth_token"
+        expected_set: true
+      - type: element_exists
+        selector: "[class*='user-menu']"
+        expected: true
+
+  - name: "Logout Clears Session"
+    id: AUTH005
+    priority: high
+    tags: [auth, logout, session-clear]
+    description: "Test that logout clears JWT token and redirects to homepage"
+    steps:
+      - action: navigate
+        url: "{{base_url}}/auth/login"
+      - action: fill_form
+        fields:
+          email: "demo@example.com"
+          password: "demo123"
+      - action: click
+        element: "Sign In button"
+        ref: "button[type='submit']"
+      - action: wait_for
+        text: "Dashboard"
+        timeout: 5000
+      - action: evaluate
+        function: |
+          () => {
+            return {
+              tokenExists: !!localStorage.getItem('auth_token'),
+              userMenuVisible: !!document.querySelector('[class*="user-menu"]')
+            };
+          }
+      - action: click
+        element: "Logout button"
+        ref: "button[class*='logout']"
+      - action: wait_for
+        text: "Boutique"
+        timeout: 5000
+      - action: evaluate
+        function: |
+          () => {
+            const token = localStorage.getItem('auth_token');
+            return {
+              tokenCleared: !token,
+              currentPath: window.location.pathname
+            };
+          }
+      - action: screenshot
+        name: "after-logout"
+    assertions:
+      - type: localStorage_key
+        key: "auth_token"
+        expected_set: false
+      - type: url_contains
+        url: "/"
+        expected: true
+
+  - name: "Invalid Login Credentials Show Error"
+    id: AUTH006
+    priority: high
+    tags: [auth, login-error, validation]
+    description: "Test that invalid credentials display error message"
+    steps:
+      - action: navigate
+        url: "{{base_url}}/auth/login"
+      - action: wait_for
+        text: "Sign In"
+        timeout: 3000
+      - action: fill_form
+        fields:
+          email: "wrong@example.com"
+          password: "wrongpassword"
+      - action: click
+        element: "Sign In button"
+        ref: "button[type='submit']"
+      - action: wait_for
+        text: "Invalid email or password"
+        timeout: 5000
+      - action: screenshot
+        name: "login-error"
+      - action: evaluate
+        function: |
+          () => {
+            const token = localStorage.getItem('auth_token');
+            return {
+              tokenNotCreated: !token,
+              errorDisplayed: !!document.querySelector('[class*="error"]')
+            };
+          }
+    assertions:
+      - type: text_contains
+        text: "Invalid email or password"
+        expected: true
+      - type: localStorage_key
+        key: "auth_token"
+        expected_set: false
+
+  - name: "Registration Form Validation"
+    id: AUTH007
+    priority: medium
+    tags: [auth, registration, form-validation]
+    description: "Test registration form validation for empty fields and mismatched passwords"
+    steps:
+      - action: navigate
+        url: "{{base_url}}/auth/register"
+      - action: wait_for
+        text: "Sign Up"
+        timeout: 3000
+      - action: fill_form
+        fields:
+          name: "Test User"
+          email: "test@example.com"
+          password: "SecurePass123!@#"
+          confirmPassword: "DifferentPass123!@#"
+      - action: click
+        element: "Sign Up button"
+        ref: "button[type='submit']"
+      - action: wait_for
+        text: "Passwords do not match"
+        timeout: 3000
+      - action: screenshot
+        name: "registration-validation-error"
+      - action: evaluate
+        function: |
+          () => {
+            return {
+              errorDisplayed: !!document.querySelector('[class*="error"]'),
+              formStillVisible: !!document.querySelector('input[type="email"]')
+            };
+          }
+    assertions:
+      - type: text_contains
+        text: "Passwords do not match"
+        expected: true
+      - type: element_exists
+        selector: "input[type='email']"
+        expected: true
+      - type: console_errors
+        expected: 0
+
+# Test configuration
+config:
+  browser_type: "chromium"
+  timeout: 30000
+  headless: true
+  screenshot_on_error: true
+  auto_fix_issues: true

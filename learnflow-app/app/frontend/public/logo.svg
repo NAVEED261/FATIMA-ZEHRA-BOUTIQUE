@@ -1,0 +1,43 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle with gradient -->
+  <defs>
+    <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ec4899;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#9333ea;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="dressGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#fbbf24;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#fb923c;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f87171;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="95" fill="url(#logoGrad)" />
+
+  <!-- Dress shape -->
+  <g transform="translate(50, 40)">
+    <!-- Dress body -->
+    <path d="M 50 0 L 70 20 L 75 40 Q 75 60 70 80 L 30 80 Q 25 60 25 40 L 30 20 Z" fill="url(#dressGrad)" stroke="#fbbf24" stroke-width="2"/>
+
+    <!-- Neckline -->
+    <ellipse cx="50" cy="15" rx="15" ry="12" fill="#fbbf24" stroke="#f59e0b" stroke-width="1.5"/>
+
+    <!-- Waist detail -->
+    <ellipse cx="50" cy="45" rx="22" ry="8" fill="none" stroke="#f59e0b" stroke-width="2" opacity="0.6"/>
+
+    <!-- Embroidery pattern (stars) -->
+    <circle cx="45" cy="30" r="2" fill="#fbbf24" opacity="0.8"/>
+    <circle cx="55" cy="30" r="2" fill="#fbbf24" opacity="0.8"/>
+    <circle cx="40" cy="50" r="1.5" fill="#fbbf24" opacity="0.6"/>
+    <circle cx="60" cy="50" r="1.5" fill="#fbbf24" opacity="0.6"/>
+    <circle cx="50" cy="65" r="2" fill="#fbbf24" opacity="0.7"/>
+
+    <!-- Sleeves -->
+    <path d="M 30 20 L 20 30 M 70 20 L 80 30" stroke="#f59e0b" stroke-width="2" fill="none"/>
+  </g>
+
+  <!-- Text wrapper (will be outside SVG) -->
+  <!-- Border circle -->
+  <circle cx="100" cy="100" r="95" fill="none" stroke="white" stroke-width="3" opacity="0.9"/>
+</svg>

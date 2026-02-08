@@ -1,0 +1,8 @@
+
+# Env files with secrets
+.env.backend
+learnflow-app/.env.backend
+.env
+*.env
+
+.vercel

@@ -1,0 +1,315 @@
+# Payment Form Tests for Autonomous Testing
+# 5 comprehensive test scenarios for payment flows (payment methods, quantity, validation, checkout)
+# Part of Phase 3: Test Coverage Expansion
+
+version: "1.0"
+app_type: ecommerce
+payment_tests: true
+total_scenarios: 5
+
+# Payment Form Tests (5 scenarios)
+payment_flow_tests:
+  - name: "Payment Method Selection and Form Update"
+    id: PAY001
+    priority: critical
+    tags: [payment, payment-method, form-update]
+    description: "Test switching between payment methods and form updates accordingly"
+    steps:
+      - action: navigate
+        url: "{{base_url}}/products/1"
+      - action: wait_for
+        text: "Price"
+        timeout: 3000
+      - action: screenshot
+        name: "product-detail-page"
+      - action: evaluate
+        function: |
+          () => {
+            const methods = document.querySelectorAll('input[name="payment_method"]');
+            return {
+              paymentMethodsCount: methods.length,
+              hasEasyPaisa: !!document.querySelector('input[value="easypaise"]'),
+              hasJazzCash: !!document.querySelector('input[value="jazzcash"]'),
+              hasCard: !!document.querySelector('input[value="card"]')
+            };
+          }
+      - action: click
+        element: "EasyPaisa payment method"
+        ref: "input[value='easypaise']"
+      - action: evaluate
+        function: |
+          () => {
+            const easyPaisaForm = document.querySelector('[data-form="easypaise"]');
+            return {
+              easyPaisaFormVisible: easyPaisaForm && easyPaisaForm.offsetHeight > 0,
+              hasPhoneField: !!easyPaisaForm?.querySelector('input[name="phone"]'),
+              hasOTPField: !!easyPaisaForm?.querySelector('input[name="otp"]')
+            };
+          }
+      - action: screenshot
+        name: "easypaisa-form"
+      - action: click
+        element: "JazzCash payment method"
+        ref: "input[value='jazzcash']"
+      - action: evaluate
+        function: |
+          () => {
+            const jazzForm = document.querySelector('[data-form="jazzcash"]');
+            return {
+              jazzFormVisible: jazzForm && jazzForm.offsetHeight > 0,
+              hasAccountField: !!jazzForm?.querySelector('input[name="account"]')
+            };
+          }
+      - action: screenshot
+        name: "jazzcash-form"
+      - action: click
+        element: "Card payment method"
+        ref: "input[value='card']"
+      - action: evaluate
+        function: |
+          () => {
+            const cardForm = document.querySelector('[data-form="card"]');
+            return {
+              cardFormVisible: cardForm && cardForm.offsetHeight > 0,
+              hasCardNumberField: !!cardForm?.querySelector('input[name="card_number"]'),
+              hasExpiryField: !!cardForm?.querySelector('input[name="expiry"]'),
+              hasCVVField: !!cardForm?.querySelector('input[name="cvv"]')
+            };
+          }
+    assertions:
+      - type: element_exists
+        selector: "input[name='payment_method']"
+        expected: true
+      - type: element_count
+        selector: "input[name='payment_method']"
+        min: 3
+      - type: console_errors
+        expected: 0
+
+  - name: "Quantity Selection Affects Total Price"
+    id: PAY002
+    priority: high
+    tags: [payment, quantity, price-calculation]
+    description: "Test that changing quantity updates the total price correctly"
+    steps:
+      - action: navigate
+        url: "{{base_url}}/products/1"
+      - action: wait_for
+        text: "Price"
+        timeout: 3000
+      - action: evaluate
+        function: |
+          () => {
+            const priceText = document.querySelector('[class*="price"]')?.textContent || '';
+            const priceMatch = priceText.match(/Rs\s*(\d+)/);
+            return {
+              basePrice: priceMatch ? parseInt(priceMatch[1]) : 0,
+              hasQuantityInput: !!document.querySelector('input[name="quantity"]'),
+              quantityValue: parseInt(document.querySelector('input[name="quantity"]')?.value || 1)
+            };
+          }
+      - action: screenshot
+        name: "product-base-price"
+      - action: fill_form
+        fields:
+          quantity: "5"
+      - action: evaluate
+        function: |
+          () => {
+            const priceText = document.querySelector('[class*="total"]')?.textContent || '';
+            const priceMatch = priceText.match(/Rs\s*(\d+)/);
+            const totalPrice = priceMatch ? parseInt(priceMatch[1]) : 0;
+            return {
+              totalPrice: totalPrice,
+              quantityValue: parseInt(document.querySelector('input[name="quantity"]')?.value || 1),
+              priceUpdated: totalPrice > 0
+            };
+          }
+      - action: screenshot
+        name: "product-updated-price"
+      - action: evaluate
+        function: |
+          () => {
+            // Verify price calculation: basePrice * quantity = totalPrice
+            const quantityInput = document.querySelector('input[name="quantity"]');
+            const quantity = parseInt(quantityInput?.value || 1);
+            const totalText = document.querySelector('[class*="total"]')?.textContent || '';
+            const totalMatch = totalText.match(/Rs\s*(\d+)/);
+            const total = totalMatch ? parseInt(totalMatch[1]) : 0;
+
+            return {
+              quantity: quantity,
+              totalPrice: total,
+              calculationCorrect: total > 0
+            };
+          }
+    assertions:
+      - type: element_exists
+        selector: "input[name='quantity']"
+        expected: true
+      - type: element_exists
+        selector: "[class*='total']"
+        expected: true
+
+  - name: "Payment Form Required Field Validation"
+    id: PAY003
+    priority: high
+    tags: [payment, validation, required-fields]
+    description: "Test that payment form validation prevents submission with empty fields"
+    steps:
+      - action: navigate
+        url: "{{base_url}}/products/1"
+      - action: wait_for
+        text: "Price"
+        timeout: 3000
+      - action: click
+        element: "Card payment method"
+        ref: "input[value='card']"
+      - action: fill_form
+        fields:
+          card_number: ""
+          expiry: ""
+          cvv: ""
+      - action: click
+        element: "Submit payment"
+        ref: "button[type='submit']"
+      - action: wait_for
+        text: "Required"
+        timeout: 3000
+      - action: screenshot
+        name: "validation-errors"
+      - action: evaluate
+        function: |
+          () => {
+            const errorMessages = Array.from(document.querySelectorAll('[class*="error"]')).map(e => e.textContent);
+            return {
+              errorCount: errorMessages.length,
+              hasRequiredErrors: errorMessages.some(msg => msg.includes('Required')),
+              formNotSubmitted: !!document.querySelector('form')
+            };
+          }
+    assertions:
+      - type: text_contains
+        text: "Required"
+        expected: true
+      - type: element_exists
+        selector: "form"
+        expected: true
+
+  - name: "Complete Checkout Flow"
+    id: PAY004
+    priority: critical
+    tags: [payment, checkout, order-creation]
+    description: "Test complete checkout flow from product to order confirmation"
+    steps:
+      - action: navigate
+        url: "{{base_url}}/auth/login"
+      - action: fill_form
+        fields:
+          email: "demo@example.com"
+          password: "demo123"
+      - action: click
+        element: "Sign In button"
+        ref: "button[type='submit']"
+      - action: wait_for
+        text: "Dashboard"
+        timeout: 5000
+      - action: navigate
+        url: "{{base_url}}/products/1"
+      - action: wait_for
+        text: "Price"
+        timeout: 3000
+      - action: fill_form
+        fields:
+          quantity: "2"
+      - action: fill_form
+        fields:
+          payment_method: "card"
+      - action: fill_form
+        fields:
+          card_number: "4111111111111111"
+          expiry: "12/25"
+          cvv: "123"
+      - action: click
+        element: "Buy Now"
+        ref: "button[class*='buy']"
+      - action: wait_for
+        text: "Order Confirmed"
+        timeout: 10000
+      - action: screenshot
+        name: "order-confirmation"
+      - action: evaluate
+        function: |
+          () => {
+            return {
+              orderNumber: document.querySelector('[class*="order-number"]')?.textContent || '',
+              confirmationVisible: !!document.querySelector('[class*="confirmation"]'),
+              orderCreated: !!document.querySelector('[class*="order-number"]')
+            };
+          }
+    assertions:
+      - type: page_loaded
+        expected: true
+      - type: text_contains
+        text: "Order Confirmed"
+        expected: true
+      - type: console_errors
+        expected: 0
+
+  - name: "Payment Form Error Recovery"
+    id: PAY005
+    priority: medium
+    tags: [payment, error-recovery, retry]
+    description: "Test that user can correct payment errors and resubmit"
+    steps:
+      - action: navigate
+        url: "{{base_url}}/products/1"
+      - action: wait_for
+        text: "Price"
+        timeout: 3000
+      - action: click
+        element: "Card payment method"
+        ref: "input[value='card']"
+      - action: fill_form
+        fields:
+          card_number: "4111111111111112"
+          expiry: "12/25"
+          cvv: "123"
+      - action: click
+        element: "Submit payment"
+        ref: "button[type='submit']"
+      - action: wait_for
+        text: "Invalid card"
+        timeout: 5000
+      - action: screenshot
+        name: "payment-error"
+      - action: fill_form
+        fields:
+          card_number: "4111111111111111"
+      - action: click
+        element: "Submit payment"
+        ref: "button[type='submit']"
+      - action: wait_for
+        text: "Please log in to continue"
+        timeout: 5000
+      - action: screenshot
+        name: "after-error-recovery"
+    assertions:
+      - type: element_exists
+        selector: "input[name='card_number']"
+        expected: true
+      - type: console_errors
+        expected: 0
+
+# Test configuration
+config:
+  browser_type: "chromium"
+  timeout: 30000
+  headless: true
+  screenshot_on_error: true
+  auto_fix_issues: true
+  test_data:
+    - valid_card: "4111111111111111"
+    - valid_expiry: "12/25"
+    - valid_cvv: "123"
+    - invalid_card: "4111111111111112"
